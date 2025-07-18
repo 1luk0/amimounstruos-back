@@ -15,6 +15,17 @@ export default class UsuariosController {
     return usuario
   }
 
+  async getByName({ params, response }: HttpContext) {
+  const usuario = await Usuario.findBy('nombre', params.nombre)
+  if (usuario) {
+    return response.status(200)
+  } else {
+    return response.status(204)
+  }
+}
+
+
+
   async post({ request }: HttpContext) {
     const payload = await vine.validate({
       schema: createUsuarioValidator,
