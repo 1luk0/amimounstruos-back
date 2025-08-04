@@ -56,4 +56,16 @@ export default class ProgresosController {
     await progreso.delete()
     return { message: 'Progreso eliminado' }
   }
+
+  public async getByCursoYUsuario({ params }: HttpContext) {
+    const { cursoId, usuarioId } = params
+
+    const progreso = await Progreso
+      .query()
+      .where('curso_id', cursoId)
+      .andWhere('usuario_id', usuarioId)
+      .first()
+
+    return progreso || null
+  }
 }
