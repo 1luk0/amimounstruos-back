@@ -17,23 +17,35 @@ export default class ProgresosController {
   }
 
   async post({ request, response }: HttpContext) {
-    const payload = await vine.validate({
-      schema: createProgresoValidator,
-      data: request.all(),
-    })
+  const payload = await vine.validate({
+    schema: createProgresoValidator,
+    data: request.all(),
+  })
 
-    const usuario = await db.from('usuarios').where('id', payload.usuarioId).first()
-    const curso = await db.from('cursos').where('id', payload.cursoId).first()
-    const nivel = payload.nivelId
-      ? await db.from('nivels').where('id', payload.nivelId).first()
-      : true
+  const usuario = await db.from('usuarios').where('id', payload.usuarioId).first()
+  const curso = await db.from('cursos').where('id', payload.cursoId).first()
 
-    if (!usuario || !curso || !nivel) {
-      return response.badRequest({ error: 'Usuario, curso o nivel inválido' })
-    }
+  // Buscar el nivel por número y cursoId
+  const nivel = await db
+    .from('nivels')
+    .where('numero', payload.numero)
+    .andWhere('curso_id', payload.cursoId)
+    .first()
 
-    return await Progreso.create(payload)
+  if (!usuario || !curso || !nivel) {
+    return response.badRequest({ error: 'Usuario, curso o nivel inválido' })
   }
+
+  // Crear el progreso con el ID del nivel encontrado
+  const progreso = await Progreso.create({
+    usuarioId: payload.usuarioId,
+    cursoId: payload.cursoId,
+    nivelId: nivel.id,
+    estado: payload.estado
+  })
+
+  return response.status(201).json(progreso)
+}
 
   async put({ request, params, response }: HttpContext) {
     const progreso = await Progreso.find(params.id)
@@ -55,5 +67,17 @@ export default class ProgresosController {
 
     await progreso.delete()
     return { message: 'Progreso eliminado' }
+  }
+
+  public async getByCursoYUsuario({ params }: HttpContext) {
+    const { cursoId, usuarioId } = params
+
+    const progreso = await Progreso
+      .query()
+      .where('curso_id', cursoId)
+      .andWhere('usuario_id', usuarioId)
+      .first()
+
+    return progreso || null
   }
 }
