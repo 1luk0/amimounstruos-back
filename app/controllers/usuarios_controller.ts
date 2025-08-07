@@ -24,14 +24,14 @@ export default class UsuariosController {
   }
 }
 
-
-
   async post({ request }: HttpContext) {
     const payload = await vine.validate({
       schema: createUsuarioValidator,
       data: request.all(),
     })
-    return await Usuario.create(payload)
+    const usuario = await Usuario.create(payload)
+    console.log('Usuario creado:', usuario)
+    return usuario
   }
 
   async put({ request, params, response }: HttpContext) {
