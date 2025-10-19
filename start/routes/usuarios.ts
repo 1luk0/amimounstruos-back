@@ -4,6 +4,7 @@ import UsuariosController from '#controllers/usuarios_controller'
 router.get('/usuarios', [UsuariosController, 'getAll'])
 router.get('/usuarios/:id', [UsuariosController, 'getById'])
 router.get('/usuarios/nombre/:nombre', [UsuariosController, 'getByName'])
+router.get('/verificarNombre/:nombre', [UsuariosController, 'verificarNombre'])
 router.post('/usuarios', [UsuariosController, 'post'])
 router.put('/usuarios/:id', [UsuariosController, 'put'])
 router.delete('/usuarios/:id', [UsuariosController, 'delete'])

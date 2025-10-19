@@ -23,16 +23,6 @@ export default class ProgresosController {
       .andWhere('cursoId', params.cursoId)
       .preload('nivel') // <-- Carga la relación Nivel
       .first()
-
-    // 2. Diagnóstico: Mostrar el progreso completo antes de enviarlo
-    if (progreso) {
-      console.log('----------------------------------------------------')
-      console.log(`[GET /progresos/usuario/${params.usuarioId}] Progreso encontrado:`)
-      // .toJSON() convierte el objeto Lucide a un objeto JavaScript simple para logging.
-      console.log('Resultado del Preload:', progreso.toJSON()) 
-      console.log('Número de Nivel (Extracto):', progreso.nivel.numero)
-      console.log('----------------------------------------------------')
-    }
     
     // 3. Respuesta final
     if (!progreso) {
@@ -44,25 +34,15 @@ export default class ProgresosController {
   }
 
 async post({ request, response }: HttpContext) {
-  
-  console.log('----------------------------------------------------')
-  console.log('[POST /progresos] Solicitud de CREACIÓN Recibida.')
   const requestPayload = request.all()
-  console.log('Body (Payload):', requestPayload)
 
   try {
     const payload = await vine.validate({
       schema: createProgresoValidator,
       data: requestPayload,
     })
-
-    // --- PASO 1: Verificar existencia de IDs ---
-    console.log(`[VERIFICACIÓN] Buscando IDs: Usuario=${payload.usuarioId}, Curso=${payload.cursoId}`)
     const usuario = await db.from('usuarios').where('id', payload.usuarioId).first()
     const curso = await db.from('cursos').where('id', payload.cursoId).first()
-
-    // --- PASO 2: Buscar el Nivel por Número ---
-    console.log(`[BÚSQUEDA DE NIVEL] Buscando Nivel Número: ${payload.numero}`)
     const nivel = await db
       .from('nivels')
       .where('numero', payload.numero)
@@ -70,7 +50,6 @@ async post({ request, response }: HttpContext) {
       .first()
 
     if (!usuario || !curso || !nivel) {
-      // --- Logging si alguna entidad falla ---
       console.error(`[ERROR 400] Fallo en la validación de Entidades.`)
       console.error(`  Usuario encontrado: ${!!usuario}`)
       console.error(`  Curso encontrado: ${!!curso}`)
@@ -86,9 +65,7 @@ async post({ request, response }: HttpContext) {
       nivelId: nivel.id, // Usamos el ID de la tabla 'nivels'
       estado: payload.estado
     })
-    
-    // --- Logging de éxito ---
-    console.log(`[ÉXITO 201] Nuevo Progreso Creado. Progreso ID: ${progreso.id}`)
+
 
     return response.status(201).json(progreso)
 
@@ -100,17 +77,12 @@ async post({ request, response }: HttpContext) {
     }
     
     // Manejo de otros errores (DB, etc.)
-    console.error('[ERROR 500 - BASE DE DATOS O DESCONOCIDO]', error)
     return response.internalServerError({ error: 'Error interno del servidor.' });
-  } finally {
-    console.log('----------------------------------------------------')
   }
 }
 
 
 async put({ request, params, response }: HttpContext) {
-    console.log('----------------------------------------------------')
-    console.log(`[PUT /progresos/${params.userId}] Solicitud de Actualización Recibida.`)
     
     try {
       // 1. Validar el payload
@@ -118,8 +90,6 @@ async put({ request, params, response }: HttpContext) {
         schema: createProgresoValidator,
         data: request.all(),
       })
-      
-      console.log(`Body: Nivel ${payload.numero}, Curso ${payload.cursoId}`)
 
       // 2. Buscar el Progreso del usuario (lo necesitamos para actualizarlo)
       let progreso = await Progreso.query()
@@ -165,9 +135,6 @@ async put({ request, params, response }: HttpContext) {
       })
 
       await progreso.save()
-      
-      console.log(`[ÉXITO] Progreso actualizado. Nuevo nivelId: ${progreso.nivelId}`)
-      console.log('----------------------------------------------------')
       return response.json(progreso)
 
     } catch (error) {

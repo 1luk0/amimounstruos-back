@@ -16,13 +16,29 @@ export default class UsuariosController {
   }
 
   async getByName({ params, response }: HttpContext) {
+  const usuario = await Usuario.query().whereILike('nombre', params.nombre).first()
+
+  if (!usuario) {
+    return response.notFound({ error: 'Usuario no encontrado' })
+  }
+
+  return usuario
+}
+
+
+async verificarNombre({ params, response }: HttpContext) {
   const usuario = await Usuario.findBy('nombre', params.nombre)
+
   if (usuario) {
+    // 200 → ya existe
     return response.status(200)
   } else {
+    // 204 → disponible
     return response.status(204)
   }
 }
+
+
 
   async post({ request }: HttpContext) {
     const payload = await vine.validate({
@@ -30,7 +46,6 @@ export default class UsuariosController {
       data: request.all(),
     })
     const usuario = await Usuario.create(payload)
-    console.log('Usuario creado:', usuario)
     return usuario
   }
 
